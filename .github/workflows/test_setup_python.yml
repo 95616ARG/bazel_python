@@ -16,9 +16,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python 3.7.4.
+      # https://stackoverflow.com/questions/36774171/how-to-include-ssl-with-python-build-on-macos
       run: |
-        if [[ "${{ matrix.os }}" =~ "macos" ]]; then brew install openssl; fi
-        echo y | ./setup_python.sh 3.7.4 $HOME/.bazel_python
+        OPTIONS=""
+        if [[ "${{ matrix.os }}" =~ "macos" ]]
+        then
+            OPTIONS="--with-openssl=$(brew --prefix openssl)"
+        fi
+        echo y | ./setup_python.sh 3.7.4 $HOME/.bazel_python $OPTIONS
         [ "$($HOME/.bazel_python/3.7.4/bin/python3 --version)" = "Python 3.7.4" ]
         $HOME/.bazel_python/3.7.4/bin/python3 -c "import ssl"
         $HOME/.bazel_python/3.7.4/bin/python3 -c "import zlib"
