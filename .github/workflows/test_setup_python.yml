@@ -18,3 +18,7 @@ jobs:
     - name: Set up Python 3.7.4.
       run: |
         echo y | ./setup_python.sh 3.7.4 $HOME/.bazel_python
+        [ "$($HOME/.bazel_python/3.7.4/bin/python3 --version)" = "Python 3.7.4" ]
+        $HOME/.bazel_python/3.7.4/bin/python3 -c "import ssl"
+        $HOME/.bazel_python/3.7.4/bin/python3 -c "import i_no_exist"
+        $HOME/.bazel_python/3.7.4/bin/python3 -c "import zlib"
