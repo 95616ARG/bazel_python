@@ -14,4 +14,4 @@ jobs:
     - uses: actions/checkout@v2
     - name: Set up Python 3.7.4.
       run: |
-        ./setup_python.sh 3.7.4 $HOME/.bazel_python
+        echo y | ./setup_python.sh 3.7.4 $HOME/.bazel_python
