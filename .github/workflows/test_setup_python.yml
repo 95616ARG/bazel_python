@@ -1,0 +1,17 @@
+# Adapted from: https://github.com/pubref/rules_protobuf/blob/master/.travis.yml
+name: Test Setting up Python
+
+on:
+  pull_request:
+    paths:
+    - 'setup_python.sh'
+    - '.github/workflows/test_setup_python.yml'
+
+jobs:
+  set-up-python:
+    runs-on: [macos-10.15,ubuntu-16.04,ubuntu-18.04,ubuntu-20.04]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python 3.7.4.
+      run: |
+        ./setup_python.sh 3.7.4 $HOME/.bazel_python
