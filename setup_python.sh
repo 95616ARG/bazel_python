@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ $# -ne 1 ] && [ $# -ne 2 ]; then
+if [ $# -le 1 ]; then
     echo "This is $(basename $0). Usage:"
     echo "$(basename $0) [version] [/path/to/install/parent/directory] [python configure flags]"
     echo "Example:"
