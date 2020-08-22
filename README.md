@@ -2,6 +2,7 @@
 A simple way to use Python reproducibly within Bazel.
 
 ## One-Time Setup
+#### Ubuntu
 First, install the packages necessary to build Python with commonly-used
 modules. On Ubuntu to get `pip`, `zlib`, and `bz2` modules, this looks like:
 ```bash
@@ -23,6 +24,15 @@ time. You may run this script multiple times to install different versions of
 Python, however you should always use the same install target directory (e.g.,
 `$HOME/.bazel_python` above). Each version will be placed in its own
 subdirectory of that target.
+
+#### macOS
+On macOS, running the above will likely give a warning about missing SSL
+modules. To resolve this, assuming you have Homebrew installed, you may need to
+run instead:
+```bash
+brew install openssl
+./setup_python.sh 3.7.4 $HOME/.bazel_python --with-openssl=$(brew --prefix openssl)
+```
 
 ## Per-Project Usage
 1. Add a `requirements.txt` with the pip requirements you need.

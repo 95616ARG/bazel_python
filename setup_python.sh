@@ -38,6 +38,15 @@ then
     echo "If you have run this script multiple times, you may safely remove duplicate lines from $HOME/.bazelrc"
     echo "build --define BAZEL_PYTHON_DIR=$install_parent_dir" >> $HOME/.bazelrc
     echo "run --define BAZEL_PYTHON_DIR=$install_parent_dir" >> $HOME/.bazelrc
+
+    if ! $install_dir/bin/python3 -c "import ssl"
+    then
+        echo "WARNING: Python was built *WITHOUT* the SSL module. This will break PyPI downloads. Please re-run this script after installing libssl-dev (see the README)."
+    fi
+    if ! $install_dir/bin/python3 -c "import zlib"
+    then
+        echo "WARNING: Python was built *WITHOUT* the zlib module. If needed, please re-run this script after installing zlib1g-dev (see the README)."
+    fi
 else
     echo "Aborting."
 fi
