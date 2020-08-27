@@ -60,19 +60,72 @@ bazel_python_interpreter(
 )
 ```
 
+#### Pytest and Coverage
+We have support for running Pytest tests with `bazel test //...` as well as
+preliminary support for extracting coverage reports.
+
+For Pytest support, first add `pytest` to your `requirements.txt` file and
+declare your test files with `py_test` rules depending on `pytest_helper`:
+```python
+py_test(
+    name = "test_name",
+    size = "small",
+    srcs = ["test_name.py"],
+    deps = [
+        ...
+        "@bazel_python//:pytest_helper",
+    ],
+)
+```
+and then structure your test file as follows:
+```python
+"""Test cases for the abstraction."""
+# ... first import system, third-party libraries here ...
+try:
+    from external.bazel_python.pytest_helper import main
+    IN_BAZEL = True
+except ImportError:
+    IN_BAZEL = False
+# ... then import your project libraries here ...
+
+# ... your tests go here ...
+
+if IN_BAZEL:
+    main(__name__, __file__)
+```
+
+If you will only be running under Bazel (i.e., do not need to support 'raw'
+`python3 -m pytest` calls), you can leave out the `try`/`except` and `IN_BAZEL`
+checks.
+
+To get coverage support, you can add `coverage` to your `requirements.txt` file
+then use the `bazel_python_coverage_report` macro:
+```python
+bazel_python_coverage_report(
+    name = "coverage_report",
+    test_paths = ["*"],
+    code_paths = ["*.py"],
+)
+```
+Here `test_paths` should be essentially a list of `py_test` targets which can
+produce `coverage` outputs. `code_paths` should be a list of Python files in
+the repository for which you want to compute coverage. Running
+`bazel run coverage_report` should produce an `htmlcov` directory with the
+coverage report.
+
 ## Known Issues
-### Missing Modules
+#### Missing Modules
 If you get errors about missing modules (e.g., `pytest not found`), please
 triple-check that you have installed OpenSSL libraries. On Ubuntu this looks
 like `apt install libssl-dev`.
 
-### Breaking The Sandbox
+#### Breaking The Sandbox
 Even if you don't use these `bazel_python` rules, you may notice that
 `py_binary` rules can include Python libraries that are not explicitly depended
 on. This is due to the fact that Bazel creates its sandbox using symbolic
 links, and Python will _follow symlinks_ when looking for a package.
 
-### Bazel-Provided Python Packages
+#### Bazel-Provided Python Packages
 Many Bazel packages come "helpfully" pre-packaged with relevant Python code,
 which Bazel will then add to the `PYTHONPATH`. For example, when you depend on
 a Python GRPC-Protobuf rule, it will automatically add a copy of the GRPC
@@ -89,7 +142,7 @@ Note this might cause problems if the path to the current repository contains
 `/com_github_grpc_grpc/`. We are on the lookout for a better solution
 long-term.
 
-### Non-Hermetic Builds
+#### Non-Hermetic Builds
 Although this process ensures everyone is using the same _version_ of Python,
 it does not make assurances about the _configuration_ of each of those Python
 instances. For example, someone who ran the `setup_python.sh` script with
@@ -97,14 +150,14 @@ instances. For example, someone who ran the `setup_python.sh` script with
 check the output of `setup_python.sh` to see which optional modules were not
 installed.
 
-### Duplicates in `~/.bazelrc`
+#### Duplicates in `~/.bazelrc`
 After building Python, `setup_python.sh` will append to your `~/.bazelrc` file
 a pointer to the path to the python parent directory provided. If you
 call `setup_python.sh` multiple times (e.g. to install multiple versions or
 re-install a single version), then multiple copies of that will be added to
 `~/.bazelrc`. These duplicates can be removed safely.
 
-### `:` Characters in Path
+#### `:` Characters in Path
 Python's venv hard-codes a number of paths in a way that Bazel violates by
 moving everything around all the time. We resolve this by replacing those
 hard-coded paths with a relative one that should work at run time in the Bazel
@@ -114,17 +167,17 @@ internal sandbox directory has a `:` character, our find and replace will
 fail.* If you notice errors that are otherwise unexplained, it may be worth
 double-checking that you don't have paths with question marks in them.
 
-### Installs Twice
+#### Installs Twice
 For some reason, Bazel seems to enjoy running the pip-installation script
 twice, an extra time with the note "for host." I'm not entirely sure why this
 is, but it doesn't seem to cause any problems other than slowing down the first
 build.
 
-### Custom Name
+#### Custom Name
 Need to support custom directory naming in pywrapper.
 
 ## Tips
-### Using Python in a Genrule
+#### Using Python in a Genrule
 To use the interpreter in a genrule, depend on it in the tools and make sure to
 source the venv before calling `python3`:
 ```python
