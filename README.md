@@ -79,7 +79,6 @@ py_test(
 ```
 and then structure your test file as follows:
 ```python
-"""Test cases for the abstraction."""
 # ... first import system, third-party libraries here ...
 try:
     from external.bazel_python.pytest_helper import main
