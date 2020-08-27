@@ -19,8 +19,8 @@ if COVERAGE:
 def main(script_name, file_name):
     """Test runner that supports Bazel test and the coverage_report.sh script.
 
-    Tests should import heplers before importing any other local scripts, then
-    call main(__file__) after declaring their tests.
+    Tests should import this module before importing any other local scripts,
+    then call main(__name__, __file__) after declaring their tests.
     """
     if script_name != "__main__":
         return
