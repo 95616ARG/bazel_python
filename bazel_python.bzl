@@ -120,6 +120,15 @@ bazel_python_venv = rule(
 )
 
 def bazel_python_coverage_report(name, test_paths, code_paths):
+    """Adds a rule to build the coverage report.
+
+    @name is the name of the target which, when run, creates the coverage
+        report.
+    @test_paths should be a list of the py_test targets for which coverage
+        has been run. Bash wildcards are supported.
+    @code_paths should point to the Python code for which you want to compute
+        the coverage.
+    """
     test_paths = " ".join([
         "bazel-out/*/testlogs/" + test_path + "/test.outputs/outputs.zip"
         for test_path in test_paths])

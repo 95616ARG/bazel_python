@@ -108,9 +108,9 @@ bazel_python_coverage_report(
 ```
 Here `test_paths` should be essentially a list of `py_test` targets which can
 produce `coverage` outputs. `code_paths` should be a list of Python files in
-the repository for which you want to compute coverage. Running
-`bazel run coverage_report` should produce an `htmlcov` directory with the
-coverage report.
+the repository for which you want to compute coverage. To use it, after running
+`bazel test //...` you should be able to run `bazel run coverage_report` to
+produce an `htmlcov` directory with the coverage report.
 
 ## Known Issues
 #### Missing Modules
