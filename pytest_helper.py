@@ -1,17 +1,17 @@
 """Helper methods for using Pytest within Bazel."""
+import os
 import sys
-import numpy as np
 import pytest
 try:
     import coverage
     COVERAGE = True
 except ImportError:
     COVERAGE = False
-import os
 
 if COVERAGE:
-    # We need to do this here, otherwise it won't catch method/class declarations.
-    # Also, helpers imports should be before all other local imports.
+    # We need to do this here, otherwise it won't catch method/class
+    # declarations.  Also, helpers imports should be before all other local
+    # imports.
     cov_file = "%s/coverage.cov" % os.environ["TEST_UNDECLARED_OUTPUTS_DIR"]
     cov = coverage.Coverage(data_file=cov_file)
     cov.start()
