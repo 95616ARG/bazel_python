@@ -105,7 +105,7 @@ def _bazel_python_venv_impl(ctx):
     """
     ctx.actions.run_shell(
         command = command.format(py_dir = python_dir, out_dir = venv_dir.path),
-        inputs = inputs,
+        inputs = inputs + ctx.attr.run_after_pip_srcs,
         outputs = [venv_dir],
     )
     return [DefaultInfo(files = depset([venv_dir]))]
@@ -116,6 +116,7 @@ bazel_python_venv = rule(
         "python_version": attr.string(),
         "requirements_file": attr.label(allow_single_file = True),
         "run_after_pip": attr.string(),
+        "run_after_pip_srcs": attr.label(),
     },
 )
 
