@@ -116,7 +116,7 @@ bazel_python_venv = rule(
         "python_version": attr.string(),
         "requirements_file": attr.label(allow_single_file = True),
         "run_after_pip": attr.string(),
-        "run_after_pip_srcs": attr.label(),
+        "run_after_pip_srcs": attr.label_list(),
     },
 )
 
