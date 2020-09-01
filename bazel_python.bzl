@@ -135,13 +135,15 @@ def bazel_python_coverage_report(name, test_paths, code_paths):
     test_paths = " ".join([
         "bazel-out/*/testlogs/" + test_path + "/test.outputs/outputs.zip"
         for test_path in test_paths])
-    code_paths = " ".join([code_path for code_path in code_paths])
+    code_paths = " ".join(code_paths)
+    if "'" in test_paths or "'" in code_paths:
+        fail("Quotation marks in paths names not yet supported.")
     # For generating the coverage report.
     native.sh_binary(
         name = name,
         srcs = ["@bazel_python//:coverage_report.sh"],
         deps = [":_dummy_coverage_report"],
-        args = [test_paths, code_paths],
+        args = ["'" + test_paths + "'", "'" + code_paths + "'"],
     )
 
     # This is only to get bazel_python_venv as a data dependency for
