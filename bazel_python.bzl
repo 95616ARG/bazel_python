@@ -88,11 +88,11 @@ def _bazel_python_venv_impl(ctx):
         export PATH={py_dir}/lib:$PATH
         export PATH={py_dir}/share:$PATH
         export PYTHON_PATH={py_dir}:{py_dir}/bin:{py_dir}/include:{py_dir}/lib:{py_dir}/share
-        python3 -m venv {out_dir}
-        source {out_dir}/bin/activate
+        python3 -m venv {out_dir} || exit 1
+        source {out_dir}/bin/activate || exit 1
     """
     if ctx.attr.requirements_file:
-        command += "pip3 install -r " + ctx.file.requirements_file.path
+        command += "pip3 install -r " + ctx.file.requirements_file.path + " || " + "exit 1"
         inputs.append(ctx.file.requirements_file)
     for src in ctx.attr.run_after_pip_srcs:
         inputs.extend(src.files.to_list())
@@ -102,8 +102,8 @@ def _bazel_python_venv_impl(ctx):
         REPLACEWITH='$PWD/bazel_python_venv_installed'
         # This prevents sed from trying to modify the directory. We may want to
         # do a more targeted sed in the future.
-        rm -rf {out_dir}/bin/__pycache__
-        sed -i'' -e s:$REPLACEME:$REPLACEWITH:g {out_dir}/bin/*
+        rm -rf {out_dir}/bin/__pycache__ || exit 1
+        sed -i'' -e s:$REPLACEME:$REPLACEWITH:g {out_dir}/bin/* || exit 1
     """
     ctx.actions.run_shell(
         command = command.format(py_dir = python_dir, out_dir = venv_dir.path),
