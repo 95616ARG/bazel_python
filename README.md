@@ -112,6 +112,13 @@ the repository for which you want to compute coverage. To use it, after running
 `bazel test //...` you should be able to run `bazel run coverage_report` to
 produce an `htmlcov` directory with the coverage report.
 
+#### Selectively Disabling Bazel-Python
+In some scenarios, it may suffice to use the system Python. For example, if a
+backend server only needs Python for one or two setup operations. In this case,
+one may pass `--define BAZEL_PYTHON_ONLY_WARN=true` to instruct Bazel-Python to
+fallback on the system Python installation if a version-specific one is not
+found. It will still print a debug message, but will not fail the build.
+
 ## Known Issues
 #### Missing Modules
 If you get errors about missing modules (e.g., `pytest not found`), please
