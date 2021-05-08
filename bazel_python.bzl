@@ -74,8 +74,9 @@ def _bazel_python_venv_impl(ctx):
     Also installs requirements specified by @ctx.attr.requirements_file.
     """
     use_system = False
+    only_warn = ctx.var.get("BAZEL_PYTHON_ONLY_WARN", "false").lower() == "true"
     if "BAZEL_PYTHON_DIR" not in ctx.var:
-        if "BAZEL_PYTHON_ONLY_WARN" in ctx.var:
+        if only_warn:
             print("A bazel-python installation was not found. Falling back to the system python. For reproducibility, please run setup_python.sh for " + ctx.attr.python_version)
             use_system = True
         else:
