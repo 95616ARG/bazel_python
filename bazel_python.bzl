@@ -73,8 +73,13 @@ def _bazel_python_venv_impl(ctx):
 
     Also installs requirements specified by @ctx.attr.requirements_file.
     """
+    use_system = False
     if "BAZEL_PYTHON_DIR" not in ctx.var:
-        fail("You must run setup_python.sh for " + ctx.attr.python_version)
+        if "BAZEL_PYTHON_ONLY_WARN" in ctx.var:
+            print("A bazel-python installation was not found. Falling back to the system python. For reproducibility, please run setup_python.sh for " + ctx.attr.python_version)
+            use_system = True
+        else:
+            fail("You must run setup_python.sh for " + ctx.attr.python_version)
     python_parent_dir = ctx.var.get("BAZEL_PYTHON_DIR")
     python_version = ctx.attr.python_version
     python_dir = python_parent_dir + "/" + python_version
@@ -82,12 +87,17 @@ def _bazel_python_venv_impl(ctx):
     # TODO: Fail if python_dir does not exist.
     venv_dir = ctx.actions.declare_directory("bazel_python_venv_installed")
     inputs = []
-    command = """
-        export PATH={py_dir}/bin:$PATH
-        export PATH={py_dir}/include:$PATH
-        export PATH={py_dir}/lib:$PATH
-        export PATH={py_dir}/share:$PATH
-        export PYTHON_PATH={py_dir}:{py_dir}/bin:{py_dir}/include:{py_dir}/lib:{py_dir}/share
+    if use_system:
+        command = ""
+    else:
+        command = """
+            export PATH={py_dir}/bin:$PATH
+            export PATH={py_dir}/include:$PATH
+            export PATH={py_dir}/lib:$PATH
+            export PATH={py_dir}/share:$PATH
+            export PYTHON_PATH={py_dir}:{py_dir}/bin:{py_dir}/include:{py_dir}/lib:{py_dir}/share
+        """
+    command += """
         python3 -m venv {out_dir} || exit 1
         source {out_dir}/bin/activate || exit 1
     """
