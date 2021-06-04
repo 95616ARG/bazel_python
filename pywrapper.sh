@@ -6,7 +6,7 @@
 # bazel_out/.../[mainworkspace]. This searches for the first matching path then
 # exits, so it should be reasonably fast in most cases.
 # https://unix.stackexchange.com/questions/68414/only-find-first-few-matched-files-using-find
-venv_path=$((find . -path "*/bazel_python_venv_installed/bin/activate" & ) | head -n 1)
+venv_path=$((find -L . -path "*/bazel_python_venv_installed/bin/activate" & ) | head -n 1)
 # If venv_path was not found it will be empty and the below will throw an
 # error, alerting Bazel something went wrong.
 source $venv_path || exit 1
