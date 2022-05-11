@@ -89,7 +89,7 @@ def _bazel_python_venv_impl(ctx):
         python_dir = ctx.path(python_parent_dir).dirname.get_child(python_version)
         if not python_dir.exists:
             fail("A bazel-python installation for {python_version} was not found in '{python_parent_dir}/{python_version}'. You must run setup_python.sh for {python_version}".format(
-                python_parent_dir=python_parent_dir
+                python_parent_dir=python_parent_dir,
                 python_version=python_version
             ))
 
