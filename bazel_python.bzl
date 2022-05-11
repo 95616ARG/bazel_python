@@ -78,17 +78,21 @@ def _bazel_python_venv_impl(ctx):
     only_warn = ctx.var.get("BAZEL_PYTHON_ONLY_WARN", "false").lower() == "true"
     if "BAZEL_PYTHON_DIR" not in ctx.var:
         if only_warn:
-            print("A bazel-python installation was not found. Falling back to the system python. For reproducibility, please run setup_python.sh for " + python_version)
+            print("Bazel build flag 'BAZEL_PYTHON_DIR' was not defined. Falling back to the system python. For reproducibility, please run setup_python.sh for " + python_version)
             use_system = True
         else:
-            fail("You must run setup_python.sh for " + python_version)
+            fail("Bazel build flag 'BAZEL_PYTHON_DIR' was not defined. You must run setup_python.sh for " + python_version)
     if use_system:
         python_dir = ""
     else:
         python_parent_dir = ctx.var.get("BAZEL_PYTHON_DIR")
-        python_dir = python_parent_dir + "/" + python_version
+        python_dir = ctx.path(python_parent_dir).dirname.get_child(python_version)
+        if not python_dir.exists:
+            fail("A bazel-python installation for {python_version} was not found in '{python_parent_dir}/{python_version}'. You must run setup_python.sh for {python_version}".format(
+                python_parent_dir=python_parent_dir
+                python_version=python_version
+            ))
 
-    # TODO: Fail if python_dir does not exist.
     venv_dir = ctx.actions.declare_directory("bazel_python_venv_installed")
     inputs = []
     if use_system:
