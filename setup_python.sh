@@ -25,10 +25,10 @@ then
     tar -xzf Python-$version.tgz
     cd Python-$version
 
-    ./configure --prefix=$install_dir --enable-optimizations $@
+    ./configure --prefix=$install_dir $@
 
-    make -j64
-    make install -j64
+    make -j
+    make install
     cd $install_dir
     rm -rf Python-$version
     rm -rf Python-$version.tgz
