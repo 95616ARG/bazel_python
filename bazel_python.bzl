@@ -94,10 +94,9 @@ def bazel_hermetic_python(
     =========================================================================================
     Warning: build a hermetic Python is experimental.
 
-    Know issues:
-    1. "Value for scheme.headers does not match" due to the `bazel-out/host/bin` prefix.
-    2. "[33/43] test_pprint -- test_pickle failed (6 errors)" during PGO.
-    3. (Optional) `libsqlite3-dev` is required for Jupyter Notebook.
+    Known issues:
+    1. "[33/43] test_pprint -- test_pickle failed (6 errors)" during PGO.
+    2. (Optional) `libsqlite3-dev` is required for Jupyter Notebook.
 
     TODOs:
     1. Build with tcmalloc.
@@ -113,7 +112,6 @@ def bazel_hermetic_python(
         urls = ["https://www.python.org/ftp/python/{0}/Python-{0}.tgz".format(
             python_version)],
     )
-
 
 def bazel_python_interpreter(
         name = "bazel_python_venv",
@@ -171,6 +169,29 @@ def bazel_python_interpreter(
         toolchain_type = "@bazel_tools//tools/python:toolchain_type",
     )
 
+# def _bazel_python_install_external(ctx, srcs):
+#     outs = []
+#     for src in srcs:
+#         for file in src.files.to_list():
+#             out = ctx.actions.declare_file("{dir}/{name}".format(dir=bazel_python_external_bin, name=file.basename))
+#             outs.append(out)
+#             print(out.path)
+#             ctx.actions.symlink(output=out, target_file=file)
+
+#     return outs
+
+def _resolve_external_index(ctx, index_file_path, srcs):
+
+    files = [f for src in srcs for f in src.files.to_list()]
+
+    index = ctx.actions.declare_file(index_file_path)
+    ctx.actions.write(
+        output=index,
+        content="\n".join([f.path for f in files])
+    )
+
+    return index, files
+
 def _bazel_python_venv_impl(ctx):
     """A Bazel rule to set up a Python virtual environment.
 
@@ -178,19 +199,71 @@ def _bazel_python_venv_impl(ctx):
     """
     tool_inputs, tool_input_mfs = ctx.resolve_tools(tools = [ctx.attr.python])
     venv_dir = ctx.actions.declare_directory("bazel_python_venv_installed")
+
     inputs = []
+
+    inputs_setup = [ f for s in ctx.attr.setups for f in s.files.to_list() ]
+    index_setup = ctx.actions.declare_file("_external_setup_to_install")
+    ctx.actions.write(
+        output=index_setup,
+        content="\n".join([ s.label.workspace_root for s in ctx.attr.setups ])
+    )
+
+    inputs.append(index_setup)
+    inputs.extend(inputs_setup)
+
+    index_bin, inputs_bin = _resolve_external_index(ctx, "_external_bin_to_install", ctx.attr.bins)
+
+    inputs.append(index_bin)
+    inputs.extend(inputs_bin)
+
+    index_lib, inputs_lib = _resolve_external_index(ctx, "_external_lib_to_install", ctx.attr.libs)
+
+    inputs.append(index_lib)
+    inputs.extend(inputs_lib)
 
     """ Setup venv. """
     command = """
+        set -e
+
         $(readlink -f {py_executable}) -m venv {venv_dir} || exit 1
         source {venv_dir}/bin/activate || exit 1
+        export venv_path={venv_dir}
+        export bazel_bin_path={bazel_bin_dir}
         export PATH=$PWD/{venv_dir}/bin:$PWD/{venv_dir}/include:$PWD/{venv_dir}/lib:$PWD/{venv_dir}/share:$PATH
-        export PYTHON_PATH=$PWD/{venv_dir}:$PWD/{venv_dir}/bin:$PWD/{venv_dir}/include:$PWD/{venv_dir}/lib:$PWD/{venv_dir}/share
+        export LD_LIBRARY_PATH=$PWD/{venv_dir}/lib:$LD_LIBRARY_PATH
+        export PYTHONPATH=$PWD/{venv_dir}:$PWD/{venv_dir}/bin:$PWD/{venv_dir}/include:$PWD/{venv_dir}/lib:$PWD/{venv_dir}/share
+
+        python3 -m pip install --upgrade pip
+
+        for _external_bin_src in $(cat {index_bin})
+        do
+            echo $_external_bin_src
+            ln -sfn $(readlink $_external_bin_src) $PWD/{venv_dir}/bin
+        done
+        rm {index_bin}
+
+        for _external_lib_src in $(cat {index_lib})
+        do
+            echo $_external_lib_src
+            ln -sfn $(readlink $_external_lib_src) $PWD/{venv_dir}/lib
+        done
+        rm {index_lib}
+
+        for _external_setup_prefix in $(cat {index_setup})
+        do
+            _external_setup_file=$(find . -path "*/$_external_setup_prefix/*/setup.py" | head -n 1)
+            pushd $(dirname $_external_setup_file)
+            python3 ./setup.py install || exit 1
+            popd
+        done
+        rm {index_setup}
+
     """
 
     """ Install requirements.txt. """
     if ctx.attr.requirements_file:
-        command += "python3 -m pip install -r " + ctx.file.requirements_file.path + " || exit 1"
+        command += "pip3 install -r " + ctx.file.requirements_file.path + " || exit 1"
         inputs.append(ctx.file.requirements_file)
 
     """ Include resources. """
@@ -210,9 +283,13 @@ def _bazel_python_venv_impl(ctx):
     """
     command = command.format(
         py_executable = ctx.executable.python.path,
-        venv_dir = venv_dir.path
+        venv_dir = venv_dir.path,
+        bazel_bin_dir = ctx.bin_dir.path,
+        index_bin = index_bin.path,
+        index_lib = index_lib.path,
+        index_setup = index_setup.path,
     )
-    # print(command)
+
     ctx.actions.run_shell(
         inputs = inputs,
         outputs = [venv_dir],
@@ -226,8 +303,11 @@ bazel_python_venv = rule(
     implementation = _bazel_python_venv_impl,
     attrs = {
         "requirements_file": attr.label(allow_single_file = True),
-        "run_after_pip": attr.string(),
+        "bins": attr.label_list(allow_files = True),
+        "libs": attr.label_list(allow_files = True),
+        "setups": attr.label_list(allow_files = True),
         "data": attr.label_list(allow_files = True),
+        "run_after_pip": attr.string(),
         "python": attr.label(
             executable = True,
             allow_single_file = True,
