@@ -2,7 +2,7 @@ exports_files([
     "._dummy_.py",
     "pywrapper.sh",
     "coverage_report.sh",
-])
+] + glob(["external/*.BUILD"]))
 
 sh_library(
     name = "pywrapper",
