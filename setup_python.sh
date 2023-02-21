@@ -25,9 +25,9 @@ then
     tar -xzf Python-$version.tgz
     cd Python-$version
 
-    ./configure --prefix=$install_dir $@
+    CFLAGS=-fPIC ./configure --prefix=$install_dir $@
 
-    make -j
+    make
     make install
     cd $install_dir
     rm -rf Python-$version

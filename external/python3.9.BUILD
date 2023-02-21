@@ -186,11 +186,13 @@ genrule(
         cd external/python
         INSTALL_DIR=$$PWD/out
         #
-        ./configure \
+        CFLAGS=-fPIC ./configure \
             --prefix=$$OUT_DIR \
             --exec_prefix=$$OUT_DIR \
             --enable-loadable-sqlite-extensions \
-            --enable-optimizations
+            --enable-optimizations \
+            --enable-shared=no
+
         make && make install
         #
         if ! $$OUT_DIR/bin/python3 -c "import ssl"
